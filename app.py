@@ -1,8 +1,13 @@
 import os
+import logging
 from flask import Flask, send_from_directory, request, jsonify
 from flask_cors import CORS
 import joblib
 import numpy as np
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 # Set the static folder to 'dist' (where Vite builds the frontend)
 app = Flask(__name__, static_folder='dist', static_url_path='/')
@@ -17,8 +22,9 @@ try:
     logistic_scaler = joblib.load("logistic_scaler.pkl")
     svr_model = joblib.load("svr_model.pkl")
     svr_scaler = joblib.load("svr_scaler.pkl")
+    logger.info("Models loaded successfully.")
 except Exception as e:
-    print(f"Error loading models: {e}")
+    logger.error(f"Error loading models: {e}")
 
 # API Route
 @app.route("/api/predict", methods=["POST"])
@@ -69,13 +75,24 @@ def predict():
         }
         return jsonify(response)
     except Exception as e:
+        logger.error(f"Prediction error: {e}")
         return jsonify({"error": str(e)}), 500
+
+@app.route("/api/debug")
+def debug():
+    return jsonify({
+        "cwd": os.getcwd(),
+        "static_folder": app.static_folder,
+        "root_files": os.listdir('.'),
+        "dist_exists": os.path.exists('dist'),
+        "dist_files": os.listdir('dist') if os.path.exists('dist') else None
+    })
 
 # Serve React App
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
 def serve(path):
-    if path != "" and os.path.exists(app.static_folder + '/' + path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
         return send_from_directory(app.static_folder, path)
     else:
         return send_from_directory(app.static_folder, 'index.html')
