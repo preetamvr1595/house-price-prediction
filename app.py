@@ -9,29 +9,30 @@ import numpy as np
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Set the static folder to 'dist' (where Vite builds the frontend)
+# Set the static folder (try 'dist' first, then root as fallback)
 base_dir = os.path.abspath(os.path.dirname(__file__))
 static_folder = os.path.join(base_dir, 'dist')
+if not os.path.exists(static_folder):
+    static_folder = base_dir
+
 app = Flask(__name__, static_folder=static_folder)
 CORS(app)
 
 # Log the application structure
 logger.info(f"Base Directory: {base_dir}")
-logger.info(f"Static Folder: {static_folder}")
+logger.info(f"Chosen Static Folder: {static_folder}")
 if os.path.exists(static_folder):
-    logger.info(f"Contents of dist: {os.listdir(static_folder)}")
-else:
-    logger.warning("dist folder NOT found!")
+    logger.info(f"Contents of static folder: {os.listdir(static_folder)}")
 
 # ======================
 # Load trained models
 # ======================
 try:
-    linear_model = joblib.load("linear_model.pkl")
-    logistic_model = joblib.load("logistic_model.pkl")
-    logistic_scaler = joblib.load("logistic_scaler.pkl")
-    svr_model = joblib.load("svr_model.pkl")
-    svr_scaler = joblib.load("svr_scaler.pkl")
+    linear_model = joblib.load(os.path.join(base_dir, "linear_model.pkl"))
+    logistic_model = joblib.load(os.path.join(base_dir, "logistic_model.pkl"))
+    logistic_scaler = joblib.load(os.path.join(base_dir, "logistic_scaler.pkl"))
+    svr_model = joblib.load(os.path.join(base_dir, "svr_model.pkl"))
+    svr_scaler = joblib.load(os.path.join(base_dir, "svr_scaler.pkl"))
     logger.info("Models loaded successfully.")
 except Exception as e:
     logger.error(f"Error loading models: {e}")
