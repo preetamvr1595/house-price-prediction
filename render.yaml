@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: house-price-prediction
+    runtime: python
+    buildCommand: "npm install && npm run build && pip install -r requirements.txt"
+    startCommand: "gunicorn app:app"
+    envVars:
+      - key: PORT
+        value: 5000
+      - key: NODE_VERSION
+        value: 20.x
