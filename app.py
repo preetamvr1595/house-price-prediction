@@ -23,6 +23,19 @@ if os.path.exists(static_folder):
 else:
     logger.warning("dist folder NOT found!")
 
+# ======================
+# Load trained models
+# ======================
+try:
+    linear_model = joblib.load("linear_model.pkl")
+    logistic_model = joblib.load("logistic_model.pkl")
+    logistic_scaler = joblib.load("logistic_scaler.pkl")
+    svr_model = joblib.load("svr_model.pkl")
+    svr_scaler = joblib.load("svr_scaler.pkl")
+    logger.info("Models loaded successfully.")
+except Exception as e:
+    logger.error(f"Error loading models: {e}")
+
 # API Route
 @app.route("/api/predict", methods=["POST"])
 def predict():
