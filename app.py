@@ -10,7 +10,9 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 # Set the static folder to 'dist' (where Vite builds the frontend)
-app = Flask(__name__, static_folder='dist', static_url_path='/')
+base_dir = os.path.abspath(os.path.dirname(__file__))
+static_folder = os.path.join(base_dir, 'dist')
+app = Flask(__name__, static_folder=static_folder, static_url_path='/')
 CORS(app)
 
 # ======================
