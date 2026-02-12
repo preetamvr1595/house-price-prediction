@@ -12,21 +12,16 @@ logger = logging.getLogger(__name__)
 # Set the static folder to 'dist' (where Vite builds the frontend)
 base_dir = os.path.abspath(os.path.dirname(__file__))
 static_folder = os.path.join(base_dir, 'dist')
-app = Flask(__name__, static_folder=static_folder, static_url_path='/')
+app = Flask(__name__, static_folder=static_folder)
 CORS(app)
 
-# ======================
-# Load trained models
-# ======================
-try:
-    linear_model = joblib.load("linear_model.pkl")
-    logistic_model = joblib.load("logistic_model.pkl")
-    logistic_scaler = joblib.load("logistic_scaler.pkl")
-    svr_model = joblib.load("svr_model.pkl")
-    svr_scaler = joblib.load("svr_scaler.pkl")
-    logger.info("Models loaded successfully.")
-except Exception as e:
-    logger.error(f"Error loading models: {e}")
+# Log the application structure
+logger.info(f"Base Directory: {base_dir}")
+logger.info(f"Static Folder: {static_folder}")
+if os.path.exists(static_folder):
+    logger.info(f"Contents of dist: {os.listdir(static_folder)}")
+else:
+    logger.warning("dist folder NOT found!")
 
 # API Route
 @app.route("/api/predict", methods=["POST"])
@@ -82,22 +77,32 @@ def predict():
 
 @app.route("/api/debug")
 def debug():
-    return jsonify({
-        "cwd": os.getcwd(),
-        "static_folder": app.static_folder,
-        "root_files": os.listdir('.'),
-        "dist_exists": os.path.exists('dist'),
-        "dist_files": os.listdir('dist') if os.path.exists('dist') else None
-    })
+    try:
+        dist_files = os.listdir(static_folder) if os.path.exists(static_folder) else "dist folder not found"
+        return jsonify({
+            "cwd": os.getcwd(),
+            "base_dir": base_dir,
+            "static_folder": static_folder,
+            "root_files": os.listdir('.'),
+            "dist_exists": os.path.exists(static_folder),
+            "dist_files": dist_files
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)})
 
 # Serve React App
-@app.route('/', defaults={'path': ''})
+@app.route("/", methods=["GET"])
+def index():
+    logger.info("Serving index.html from dist")
+    return send_from_directory(static_folder, "index.html")
+
 @app.route('/<path:path>')
-def serve(path):
-    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
-        return send_from_directory(app.static_folder, path)
+def serve_static(path):
+    if os.path.exists(os.path.join(static_folder, path)):
+        return send_from_directory(static_folder, path)
     else:
-        return send_from_directory(app.static_folder, 'index.html')
+        # SPA behavior: return index.html for unknown routes
+        return send_from_directory(static_folder, "index.html")
 
 if __name__ == "__main__":
     # Use PORT environment variable for Render
